@@ -1,0 +1,59 @@
+body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  text-align: center;
+  background-image: url("./miku2.jpg");
+  background-size: 115% auto;
+  background-position:0% 0%;
+}
+
+h1 {
+  margin-top: 50px;
+  margin-bottom: 30px;
+  font-size: 50px;
+}
+
+label {
+       margin-bottom: 15px;
+       font-size: 20px;
+     }
+
+input {
+  margin-bottom: 20px;
+  background-color: transparent;
+  border: 2px solid #ccc; /* 自定义边框样式 */
+  border-radius: 4px; /* 边框圆角 */
+  padding: 8px; /* 边框内边距 */
+}
+
+input:focus {
+  outline: none; /* 移除输入框获得焦点时的默认外边框样式 */
+  border-color: #555; /* 自定义获得焦点时的边框颜色 */
+}
+
+
+button {
+  margin: 5px;
+
+}
+
+#result {color:rgb(1, 41, 101);
+        }
+
+#author {color: rgb(47, 156, 230);
+text-align:right;
+/*margin-top: 120px;*/
+font-size: 20px;
+/*font-family:"华文行楷";*/
+/*padding-right: 1px;*/
+margin-right: 1px;
+position: absolute;
+top: 730px;
+right: 5px;
+}
+
+
+

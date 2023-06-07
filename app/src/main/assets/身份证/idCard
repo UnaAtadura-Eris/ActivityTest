@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="./styles.css">
+  <title>身份证工具</title>
+</head>
+
+<body>
+
+<!--  <div class="container custom-container">-->
+    <h1 >身份证工具</h1>
+    <div class="text-center">
+      <div >
+        <label for="idNumber">身份证号码：</label><br>
+        <input type="text" id="idNumber">
+      </div>
+<!--    </div>-->
+    
+    <div class="text-center">
+      <button id="generateBtn" class="btn btn-primary mb-3" >随机生成合法身份证号码</button>
+      <button id="infoBtn" class="btn btn-primary mb-3">获取身份证详细信息</button><br>
+      <button id="constellationBtn" class="btn btn-primary mb-3">根据生日返回星座</button>
+      <button id="ageBtn" class="btn btn-primary mb-3">根据生日返回年龄</button><br>
+      <button id="verifyBtn" class="btn btn-primary mb-3">校验身份证合法性</button>
+      <button id="upgradeBtn" class="btn btn-primary mb-3">身份证15位升级到18位</button>
+    </div>
+
+    <div id="result" class="d-flex justify-content-center align-items-center">
+      <!-- 结果内容 -->
+    </div>
+  </div>
+  <script src="../node_modules/moment/min/moment.min.js"></script>
+  <script src="script.browserified.js"></script>
+  <div >
+    <h2 id="author">by Una-Atadura</h2>
+  </div>
+</body>
+
+</html>
