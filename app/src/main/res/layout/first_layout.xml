@@ -19,4 +19,11 @@
         android:textStyle="bold"
         android:text="身份证工具"
         />
+    <Button
+        android:id="@+id/button3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textStyle="bold"
+        android:text="尺子"
+        />
 </LinearLayout>

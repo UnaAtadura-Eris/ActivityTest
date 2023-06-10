@@ -28,6 +28,9 @@
         <activity
             android:name=".TimeActivity"
             android:exported="true" />
+        <activity
+            android:name=".RulerActivity"
+            android:exported="true" />
     </application>
 
 </manifest>
