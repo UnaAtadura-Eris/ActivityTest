@@ -1,24 +1,27 @@
 package com.example.activitytest
-
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
+import android.widget.Button
+import android.widget.EditText
 
 class RulerView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     private val scaleHeightLong = 120 // 长刻度线高度
     private val scaleHeightMedium = 80 // 中刻度线高度
     private val scaleHeightShort = 40 // 短刻度线高度
-    private val scaleSpacing = 15.6f // 刻度间距
+    private var scaleSpacing = 15.6f // 刻度间距，默认值
     private val scaleColor = Color.BLACK // 刻度颜色
     private val scaleWidth = 5f // 刻度宽度
     private val textSize = 30f // 文本字体大小
 
     private val paint = Paint()
 
+    private var editText: EditText? = null // 用于输入刻度间距的 EditText
+    private var updateButton: Button? = null // 用于更新刻度间距的按钮
     init {
         paint.color = scaleColor
         paint.strokeWidth = scaleWidth
@@ -66,7 +69,17 @@ class RulerView(context: Context, attrs: AttributeSet) : View(context, attrs) {
             }
         }
     }
+
+    fun setEditText(editText: EditText) {
+        this.editText = editText
+    }
+
+    fun setUpdateButton(button: Button) {
+        this.updateButton = button
+        button.setOnClickListener {
+            val inputText = editText?.text.toString()
+            scaleSpacing = inputText.toFloatOrNull() ?: 0f
+            invalidate()
+        }
+    }
 }
-
-
-

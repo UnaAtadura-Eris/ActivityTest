@@ -21,11 +21,8 @@
 <!--    </div>-->
     
     <div class="text-center">
-      <button id="generateBtn" class="btn btn-primary mb-3" >随机生成合法身份证号码</button>
+      <button id="generateBtn" class="btn btn-primary mb-3" >随机生成合法身份证号码</button><br>
       <button id="infoBtn" class="btn btn-primary mb-3">获取身份证详细信息</button><br>
-      <button id="constellationBtn" class="btn btn-primary mb-3">根据生日返回星座</button>
-      <button id="ageBtn" class="btn btn-primary mb-3">根据生日返回年龄</button><br>
-      <button id="verifyBtn" class="btn btn-primary mb-3">校验身份证合法性</button>
       <button id="upgradeBtn" class="btn btn-primary mb-3">身份证15位升级到18位</button>
     </div>
 

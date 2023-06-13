@@ -7,7 +7,42 @@
     tools:context=".MainActivity">
 
     <com.example.activitytest.RulerView
+        android:id="@+id/rulerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <TextView
+        android:id="@+id/TextView"
+        android:layout_width="190dp"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:text="请自行调整刻度间距以保证测量的精度,可以输入小数，建议在15上下微调"
+        android:textColor="#1EBBAA"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:gravity="center" />
+
+    <EditText
+        android:id="@+id/EditText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/TextView"
+        android:layout_centerHorizontal="true"
+        android:inputType="numberDecimal"
+        android:textSize="20sp"
+        android:hint="输入刻度间距"
+        android:layout_marginTop="10dp" />
+
+    <Button
+        android:id="@+id/updateButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/EditText"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="#1EBBAA"
+        android:textStyle="bold"
+        android:text="确定"
+        android:textSize="24sp" />
 
 </RelativeLayout>
