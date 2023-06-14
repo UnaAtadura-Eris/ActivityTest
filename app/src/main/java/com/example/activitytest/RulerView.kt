@@ -1,4 +1,5 @@
 package com.example.activitytest
+
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
@@ -22,10 +23,17 @@ class RulerView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     private var editText: EditText? = null // 用于输入刻度间距的 EditText
     private var updateButton: Button? = null // 用于更新刻度间距的按钮
+
+    private val sharedPreferences = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+    private val prefKeyScaleSpacing = "scaleSpacing"
+
     init {
         paint.color = scaleColor
         paint.strokeWidth = scaleWidth
         paint.textSize = textSize // 设置文本字体大小
+
+        // 从 SharedPreferences 获取上次保存的刻度间距
+        scaleSpacing = sharedPreferences.getFloat(prefKeyScaleSpacing, 15.6f)
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -72,13 +80,21 @@ class RulerView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     fun setEditText(editText: EditText) {
         this.editText = editText
+
+        // 从 SharedPreferences 获取上次保存的刻度间距，并将其显示在 EditText 中
+        val lastScaleSpacing = sharedPreferences.getFloat(prefKeyScaleSpacing, 15.6f)
+        editText.setText(lastScaleSpacing.toString())
     }
 
     fun setUpdateButton(button: Button) {
         this.updateButton = button
         button.setOnClickListener {
             val inputText = editText?.text.toString()
-            scaleSpacing = inputText.toFloatOrNull() ?: 0f
+            scaleSpacing = inputText.toFloatOrNull() ?: 15.6f
+
+            // 将用户输入的刻度间距保存到 SharedPreferences
+            sharedPreferences.edit().putFloat(prefKeyScaleSpacing, scaleSpacing).apply()
+
             invalidate()
         }
     }
