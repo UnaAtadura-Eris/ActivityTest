@@ -44,7 +44,7 @@ class RulerView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
         val startY = height * 0.01f // 刻度尺的起始Y坐标为控件高度的10%
         val endY = height * 0.99f // 刻度尺的结束Y坐标为控件高度的90%
-        val centerX = scaleHeightLong + textSize // 刻度尺的X坐标为长刻度线高度和文本宽度
+        val centerX = width // 刻度尺的起始X坐标为控件宽度
 
         var y = startY // 定义刻度的起始Y坐标为刻度尺的起始Y坐标
         var cm = 0 // 初始化厘米数为0
@@ -60,7 +60,7 @@ class RulerView(context: Context, attrs: AttributeSet) : View(context, attrs) {
                 // 在长刻度线下标注厘米数
                 val text = "$cm cm"
                 val textWidth = paint.measureText(text)
-                canvas.drawText(text, centerX + 10f, y + textSize + 10f, paint)
+                canvas.drawText(text, centerX - scaleHeightLong, y + textSize + 10f, paint)
             } else if (count % 5 == 0) {
                 // 每隔5个刻度线用中刻度线
                 scaleHeight = scaleHeightMedium

@@ -26,4 +26,11 @@
         android:textStyle="bold"
         android:text="尺子"
         />
+    <Button
+        android:id="@+id/button4"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textStyle="bold"
+        android:text="猜拳"
+        />
 </LinearLayout>

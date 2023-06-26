@@ -12,6 +12,7 @@ public class MainActivity extends AppCompatActivity {
     private Button button1;
     private Button button2;
     private Button button3;
+    private Button button4;
 
 
     @Override
@@ -46,6 +47,15 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+        button4 = findViewById(R.id.button4);
+        button4.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, CaiQuanActivity.class);
+                startActivity(intent);
+            }
+        });
 
     }
 }
