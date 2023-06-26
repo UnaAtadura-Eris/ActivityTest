@@ -55,7 +55,7 @@ class CaiQuanActivity : AppCompatActivity() {
                         if (currentIndexImageView2 > 0) {
                             imageView.setImageResource(images[currentIndexImageView2 - 1])
                         } else {
-                            imageView.setImageResource(images[3])
+                            imageView.setImageResource(images[2])
                         }
                     }
                 }
@@ -85,7 +85,7 @@ class CaiQuanActivity : AppCompatActivity() {
                         if (currentIndexImageView>0){
                             imageView2.setImageResource(images[currentIndexImageView-1])
                         }else{
-                            imageView2.setImageResource(images[3])
+                            imageView2.setImageResource(images[2])
                         }
                         }
                     }
