@@ -33,7 +33,6 @@ class CaiQuanActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_cai_quan)
-
         imageView = findViewById(R.id.imageView)
         imageView2 = findViewById(R.id.imageView2)
         button =findViewById(R.id.Button_reverse)
@@ -43,34 +42,72 @@ class CaiQuanActivity : AppCompatActivity() {
         imageView.setOnClickListener {
             if (isAnimatingImageView) {
                 stopAnimationForImageView()
+                if (switch.isChecked) {
+                    if (!isAnimatingImageView2){
+                        if (currentIndexImageView2<2){
+                            imageView.setImageResource(images[currentIndexImageView2+1])
+                        }else{
+                            imageView.setImageResource(images[0])
+                        }
+                    }
+                } else if(switch2.isChecked) {
+                    if (!isAnimatingImageView2) {
+                        if (currentIndexImageView2 > 0) {
+                            imageView.setImageResource(images[currentIndexImageView2 - 1])
+                        } else {
+                            imageView.setImageResource(images[3])
+                        }
+                    }
+                }
+
             } else {
                 startAnimationForImageView()
             }
         }
+
+
+
         imageView2.setOnClickListener {
             if (isAnimatingImageView2) {
                 stopAnimationForImageView2()
+                    if (switch2.isChecked) {
+                        if (!isAnimatingImageView){
+                            if (currentIndexImageView<2){
+                            imageView2.setImageResource(images[currentIndexImageView+1])
+                            }else{
+                                imageView2.setImageResource(images[0])
+                            }
+
+                        }
+
+                    } else if(switch.isChecked) {
+                        if (!isAnimatingImageView){
+                        if (currentIndexImageView>0){
+                            imageView2.setImageResource(images[currentIndexImageView-1])
+                        }else{
+                            imageView2.setImageResource(images[3])
+                        }
+                        }
+                    }
             } else {
                 startAnimationForImageView2()
             }
         }
-        var isture = false
-
         button2.setOnClickListener{
 //            Toast.makeText(this, "button2", Toast.LENGTH_SHORT).show()
-            if (isture){
-                button.visibility= View.INVISIBLE
-                isture = false
-            }
-            else{
-                button.visibility= View.VISIBLE
-                isture = true
-            }
-
+            button.isEnabled = true
+            switch.isEnabled = true
+            button2.isEnabled = false
+            switch2.isChecked = false
+            switch2.isEnabled = false
         }
         button.setOnClickListener{
-            Toast.makeText(this, "button2", Toast.LENGTH_SHORT).show()
-//            button.visibility= View.VISIBLE
+//            Toast.makeText(this, "button2", Toast.LENGTH_SHORT).show()
+            button2.isEnabled = true
+            switch2.isEnabled = true
+            button.isEnabled = false
+            switch.isChecked = false
+            switch.isEnabled = false
         }
     }
 

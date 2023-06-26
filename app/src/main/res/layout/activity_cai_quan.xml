@@ -10,7 +10,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
-        android:visibility="invisible"/>
+        android:alpha="1"
+        android:enabled="false"
+        />
 
     <Button
         android:id="@+id/Button_reverse"
@@ -18,7 +20,9 @@
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:text="reverse"
-        android:visibility="visible"/>
+        android:alpha="1"
+        android:enabled="false"
+        />
 
     <ImageView
         android:id="@+id/imageView"
@@ -46,7 +50,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/imageView2"
         android:layout_alignParentStart="true"
-        android:visibility="visible"
+        android:alpha="1"
         android:gravity="start"
         android:text="reverse2"
         />
@@ -59,7 +63,8 @@
         android:layout_alignParentEnd="true"
         android:gravity="end"
         android:layout_alignBaseline="@id/Button_reverse2"
-        android:visibility="invisible" />
+        android:alpha="1"
+        />
 
 </RelativeLayout>
 
