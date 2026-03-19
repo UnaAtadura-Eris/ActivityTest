@@ -1,7 +1,7 @@
 "ui";
 /**
  * @Description: AutoX.js 掌上华医自动学习考试脚本（UI版）- 优化版
- * @version: 2.0.1
+ * @version: 2.0.2
  * @Author: UnaAtadura
  * @Date: 2026.03.19
  */
@@ -105,15 +105,15 @@ function createFloatWindow() {
 
     // 创建悬浮窗（使用标准颜色格式 #AARRGGBB）
     floatyWindow = floaty.rawWindow(
-        <frame bg="#AA000000" gravity="left" padding="8">
-            <vertical>
-                <text id="title" text="日志输出" textColor="#FF25D81E" textSize="14sp" />
-                <scroll id="scroll" w="*" h="200">
-                    <text id="log" text="等待日志..." textColor="#FFFFFFFF" textSize="12sp" />
-                </scroll>
-            </vertical>
-        </frame>
-    );
+    <frame bg="#AA000000" gravity="left" padding="8">
+        <vertical>
+            <text id="title" text="日志输出" textColor="#FF25D81E" textSize="14sp" />
+            <scroll id="scroll" w="*" h="0" layout_weight="1">
+                <text id="log" text="等待日志..." textColor="#FFFFFFFF" textSize="12sp" />
+            </scroll>
+        </vertical>
+    </frame>
+);
 
     // 设置窗口属性
     floatyWindow.setTouchable(false);           // 不可触摸，避免干扰操作
