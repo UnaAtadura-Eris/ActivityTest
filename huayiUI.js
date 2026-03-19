@@ -1,7 +1,7 @@
 "ui";
 /**
- * @Description: AutoX.js 掌上华医自动学习考试脚本（UI版）- 优化版
- * @version: 2.0.2
+ * @Description: AutoX.js 掌上华医自动学习考试脚本（UI版）- 定制版
+ * @version: 2.0.3
  * @Author: UnaAtadura
  * @Date: 2026.03.19
  */
@@ -58,10 +58,10 @@ auto.waitFor();
 ui.layout(
     <vertical padding="16" bg="#FFF5F5F5">
         <text text="华医网自动学习考试系统" textSize="20sp" gravity="center" margin="8" textColor="#FF2196F3" />
-        <text text="v2.0.1 (静音+日志优化)" textSize="14sp" gravity="center" marginBottom="16" textColor="#FF666666" />
+        <text text="v2.0.2" textSize="14sp" gravity="center" marginBottom="16" textColor="#FF666666" />
         <button id="btn_study" text="📺 只看视频" style="Widget.AppCompat.Button.Colored" margin="8" />
-        <button id="btn_exam" text="📝 只考试" style="Widget.AppCompat.Button.Colored" margin="8" />
-        <button id="btn_both" text="🚀 先看视频再考试" style="Widget.AppCompat.Button.Colored" margin="8" />
+        <button id="btn_exam" text="📝 只考试" style="Widget.AppCompat.Button.Colored" margin="8" visibility="gone" />
+        <button id="btn_both" text="🚀 先看视频再考试" style="Widget.AppCompat.Button.Colored" margin="8" visibility="gone" />
         <button id="btn_help" text="❓ 使用说明" style="Widget.AppCompat.Button" margin="8" />
         <text id="txt_status" text="状态：等待操作" textSize="14sp" marginTop="16" textColor="#FF4CAF50" />
         <text text="作者联系方式：QQ 799890216" textSize="12sp" gravity="center" marginTop="16" textColor="#FF999999" />
@@ -107,7 +107,7 @@ function createFloatWindow() {
     floatyWindow = floaty.rawWindow(
     <frame bg="#AA000000" gravity="left" padding="8">
         <vertical>
-            <text id="title" text="日志输出" textColor="#FF25D81E" textSize="14sp" />
+            <text id="title" text="日志输出" textColor="#FF4CAF50" textSize="15sp" />
             <scroll id="scroll" w="*" h="0" layout_weight="1">
                 <text id="log" text="等待日志..." textColor="#FFFFFFFF" textSize="12sp" />
             </scroll>
@@ -480,30 +480,30 @@ function auto_study() {
 // ==============================================
 function ScreenCapture() {
     setScreenMetrics(1080, 1920);
-    if (!requestScreenCapture()) { toast("截图权限失败"); exit(); }
+    if (!requestScreenCapture()) { log("截图权限失败"); exit(); }
     log("截图权限OK");
     sleep(1000);
 }
 
 function start_app() {
     log("启动掌上华医");
-    if (!launchApp("掌上华医")) { toast("未安装"); return false; }
+    if (!launchApp("掌上华医")) { log("未安装掌上华医"); return false; }
     sleep(5000);
     for (let i = 0; i < 5; i++) {
         if (id("iv_home_sys").exists()) { log("已到主页"); break; }
         back(); sleep(500);
     }
-    if (!id("iv_home_sys").exists()) { toast("未找到主页"); return false; }
+    if (!id("iv_home_sys").exists()) { log("未找到主页"); return false; }
     if (className("android.widget.TextView").text("我的").exists()) {
         className("android.widget.TextView").text("我的").findOne().parent().parent().click();
         sleep(1500);
-    } else { toast("未找到我的"); return false; }
+    } else { log("未找到我的"); return false; }
     if (className("android.widget.TextView").text("我的收藏").exists()) {
         YanZheng();
         className("android.widget.TextView").text("我的收藏").findOne().parent().click();
         sleep(1500);
         return true;
-    } else { toast("未找到收藏"); return false; }
+    } else { log("未找到收藏"); return false; }
 }
 
 function YanZheng() {
@@ -511,14 +511,14 @@ function YanZheng() {
     let expire = new Date(2027, 2, 1);
     let now = new Date();
     if (nickName && nickName.text() !== UserName) {
-        toast("用户名不匹配，停止");
-        sleep(3000);
+        log("当前用户名为"+nickName.text()+"，不是" + UserName + "，脚本将在10秒后自动退出,如有问题请联系作者 QQ：799890216。");
+        sleep(10*1000);
         engines.stopAll();
         exit();
     }
     if (now > expire) {
-        toast("脚本已过期");
-        sleep(3000);
+        log("脚本已过期（有效期至2027-03-01），将在10秒后自动退出,如有问题请联系作者 QQ：799890216。");
+        sleep(10*1000);
         engines.stopAll();
         exit();
     }
@@ -543,8 +543,8 @@ ui.btn_study.click(() => {
             });
             return;
         }
-        setStatus("请求截图...");
-        ScreenCapture();
+        // setStatus("请求截图...");
+        // ScreenCapture();
         setStatus("启动应用...");
         if (!start_app()) {
             setStatus("启动失败");
