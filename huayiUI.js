@@ -15,38 +15,27 @@ let 上一题文字 = "";
 let 当前选项字母 = "A";
 let 考试次数 = 0;
 const 最大考试次数 = 5;
-const UserName = "miku";
+const UserName = "李家祥";
 
 // ==============================================
 // 音量控制（新增）
 // ==============================================
-let 原始媒体音量 = 0;
-let 音频管理器 = null;
+let yinLiang = 0;
+
 
 function 初始化音量控制() {
-    音频管理器 = context.getSystemService(android.content.Context.AUDIO_SERVICE);
-    原始媒体音量 = 音频管理器.getStreamVolume(android.media.AudioManager.STREAM_MUSIC);
-    log("记录原始音量：" + 原始媒体音量);
+    yinLiang = device.getMusicVolume();
+    log("记录原始音量：" + yinLiang);
 }
 
 function 开启静音() {
-    if (!音频管理器) return;
-    音频管理器.setStreamVolume(
-        android.media.AudioManager.STREAM_MUSIC,
-        0,
-        0
-    );
+    device.setMusicVolume(0);
     log("已静音");
 }
 
 function 恢复音量() {
-    if (!音频管理器) return;
-    音频管理器.setStreamVolume(
-        android.media.AudioManager.STREAM_MUSIC,
-        原始媒体音量,
-        0
-    );
-    log("已恢复音量");
+    device.setMusicVolume(yinLiang);
+    log("恢复原来音量:" + yinLiang);
 }
 
 // ==============================================
@@ -54,6 +43,7 @@ function 恢复音量() {
 // ==============================================
 auto.waitFor();
 初始化音量控制();
+
 
 ui.layout(
     <vertical padding="16" bg="#FFF5F5F5">
@@ -105,15 +95,15 @@ function createFloatWindow() {
 
     // 创建悬浮窗（使用标准颜色格式 #AARRGGBB）
     floatyWindow = floaty.rawWindow(
-    <frame bg="#AA000000" gravity="left" padding="8">
-        <vertical>
-            <text id="title" text="日志输出" textColor="#FF4CAF50" textSize="15sp" />
-            <scroll id="scroll" w="*" h="0" layout_weight="1">
-                <text id="log" text="等待日志..." textColor="#FFFFFFFF" textSize="12sp" />
-            </scroll>
-        </vertical>
-    </frame>
-);
+        <frame bg="#AA000000" gravity="left" padding="8">
+            <vertical>
+                <text id="title" text="日志输出" textColor="#FF4CAF50" textSize="15sp" />
+                <scroll id="scroll" w="*" h="0" layout_weight="1">
+                    <text id="log" text="等待日志..." textColor="#FFFFFFFF" textSize="12sp" />
+                </scroll>
+            </vertical>
+        </frame>
+    );
 
     // 设置窗口属性
     floatyWindow.setTouchable(false);           // 不可触摸，避免干扰操作
@@ -124,7 +114,7 @@ function createFloatWindow() {
 
     // 注册脚本退出时的清理事件（只一次）
     if (!exitListenerRegistered) {
-        events.on('exit', function() {
+        events.on('exit', function () {
             恢复音量();        // 请确保该函数存在，或替换为其他清理操作
             closeFloatWindow();
         });
@@ -169,7 +159,7 @@ function closeFloatWindow() {
 
 // 重写 log 函数，同时输出到控制台和悬浮窗
 const originalLog = log;
-log = function(msg) {
+log = function (msg) {
     originalLog(msg);
     appendLog(String(msg));
 };
@@ -200,7 +190,7 @@ function 读取题库() {
     try {
         if (files.exists(题库文件路径))
             return JSON.parse(files.read(题库文件路径));
-    } catch (e) {}
+    } catch (e) { }
     return {};
 }
 
@@ -348,7 +338,7 @@ function test_card() {
             temp = temp.parent();
         }
         if (!card) { log("找不到卡片，跳过"); continue; }
-        log("打开第" + (i+1) + "个");
+        log("打开第" + (i + 1) + "个");
         card.click(); sleep(2000);
         if (id("rl_video_kaoshi").exists()) id("rl_video_kaoshi").click();
         do_test();
@@ -381,9 +371,9 @@ function showTimeText() {
         let node = id("com.huayi.cme:id/rl_play").findOne(200);
         if (node) {
             let b = node.bounds();
-            click((b.left+b.right)/2, (b.top+b.bottom)*2/3);
+            click((b.left + b.right) / 2, (b.top + b.bottom) * 2 / 3);
         }
-    } catch (e) {}
+    } catch (e) { }
     sleep(1000);
 }
 
@@ -402,37 +392,92 @@ function handleClassThinking() {
     if (ok) ok.click();
 }
 
+/**
+ * 播放视频并监控完成状态
+ */
 function play_video() {
     开启静音(); // 自动静音
-    const MAX_WAIT = 4000;
-    let start = new Date().getTime();
+    const MAX_WAIT_SECONDS = 4000;
+    let startTime = new Date().getTime();
     let lastPercent = 0;
+
     while (true) {
-        let now = new Date().getTime();
-        if ((now - start)/1000 >= MAX_WAIT) { back(); break; }
-        if (text("当前为移动网络，是否继续播放？").exists()) {
-            id("android:id/button1").click();
+        try {
+            let now = new Date().getTime();
+            let costSeconds = (now - startTime) / 1000;
+            if (costSeconds >= MAX_WAIT_SECONDS) {
+                log("⏰ 等待超时，自动退出");
+                back();
+                break;
+            }
+            log(`⏱ 已等待 ${Math.floor(costSeconds)} 秒`);
+            
+            if (text("当前为移动网络，是否继续播放？").exists()) {
+                log("✅ 检测到：当前为移动网络，自动点击继续");
+                id("android:id/button1").click();
+            }
+            handleClassThinking();
+            showTimeText();
+
+            // 检测完成文字
+            if (text("本课件已学习完毕").exists()) {
+                log("✅ 检测到：本课件已学习完毕");
+                id("com.huayi.cme:id/btn_test_result_left").click();
+                log("✅ 返回上一页");
+                break;
+            }
+            if (text("请点击左下角“考试”按钮参加课后测试").exists()) {
+                log("✅ 检测到考试提示");
+                id("com.huayi.cme:id/btnAlertDialogConfirm").click();
+                sleep(500);
+                back();
+                break;
+            }
+
+            let playDuration = id("com.huayi.cme:id/playDuration").findOne(2000);
+            let videoDuration = id("com.huayi.cme:id/videoDuration").findOne(2000);
+            if (!playDuration || !videoDuration) {
+                log("⚠️ 未找到时间文本，继续等待...");
+                sleep(2000);
+                continue;
+            }
+
+            let playText = playDuration.text();
+            let videoText = videoDuration.text();
+            let playSec = timeToSeconds(playText);
+            let videoSec = timeToSeconds(videoText);
+
+            if (videoSec <= 0) {
+                sleep(2000);
+                continue;
+            }
+
+            let percent = playSec / videoSec;
+            log(`当前进度：${(percent * 100).toFixed(2)}% (${playText}/${videoText})`);
+
+            // 进度回退 → 播放完成（循环播放）
+            if (lastPercent > 0 && percent < lastPercent) {
+                log("✅ 检测到进度倒退，视频已播放完毕");
+                back();
+                break;
+            }
+
+            if (percent >= 0.999 || playSec >= videoSec) {
+                log("✅ 视频即将播放完成，等待10秒后退出");
+                sleep(10*1000);
+                if (text("本课件已学习完毕").exists()) {
+                    id("com.huayi.cme:id/btn_test_result_left").click();
+                } else {
+                    back();
+                }
+                break;
+            }
+
+            lastPercent = percent;
+
+        } catch (e) {
+            log("⚠️ 异常，继续运行：" + e);
         }
-        handleClassThinking();
-        showTimeText();
-        if (text("本课件已学习完毕").exists()) {
-            id("com.huayi.cme:id/btn_test_result_left").click(); break;
-        }
-        if (text("请点击左下角“考试”按钮参加课后测试").exists()) {
-            id("com.huayi.cme:id/btnAlertDialogConfirm").click(); back(); break;
-        }
-        let play = id("com.huayi.cme:id/playDuration").findOne(2000);
-        let total = id("com.huayi.cme:id/videoDuration").findOne(2000);
-        if (!play || !total) { sleep(2000); continue; }
-        let pSec = timeToSeconds(play.text());
-        let tSec = timeToSeconds(total.text());
-        if (tSec <= 0) { sleep(2000); continue; }
-        let percent = pSec / tSec;
-        log("进度：" + (percent*100).toFixed(2) + "%");
-        if (percent >= 0.999) {
-            sleep(10000); back(); break;
-        }
-        lastPercent = percent;
         sleep(10000);
     }
 }
@@ -511,14 +556,14 @@ function YanZheng() {
     let expire = new Date(2027, 2, 1);
     let now = new Date();
     if (nickName && nickName.text() !== UserName) {
-        log("当前用户名为"+nickName.text()+"，不是" + UserName + "，脚本将在10秒后自动退出,如有问题请联系作者 QQ：799890216。");
-        sleep(10*1000);
+        log("当前用户名为" + nickName.text() + "，不是" + UserName + "，脚本将在10秒后自动退出,如有问题请联系作者 QQ：799890216。");
+        sleep(10 * 1000);
         engines.stopAll();
         exit();
     }
     if (now > expire) {
         log("脚本已过期（有效期至2027-03-01），将在10秒后自动退出,如有问题请联系作者 QQ：799890216。");
-        sleep(10*1000);
+        sleep(10 * 1000);
         engines.stopAll();
         exit();
     }
@@ -533,7 +578,7 @@ ui.btn_study.click(() => {
     ui.btn_exam.setEnabled(false);
     ui.btn_both.setEnabled(false);
     setStatus("准备学习...");
-    threads.start(function() {
+    threads.start(function () {
         if (!createFloatWindow()) {
             setStatus("悬浮窗权限失败");
             ui.run(() => {
@@ -574,7 +619,7 @@ ui.btn_exam.click(() => {
     ui.btn_exam.setEnabled(false);
     ui.btn_both.setEnabled(false);
     setStatus("准备考试...");
-    threads.start(function() {
+    threads.start(function () {
         if (!createFloatWindow()) {
             setStatus("悬浮窗权限失败");
             ui.run(() => {
@@ -615,7 +660,7 @@ ui.btn_both.click(() => {
     ui.btn_exam.setEnabled(false);
     ui.btn_both.setEnabled(false);
     setStatus("准备完整流程...");
-    threads.start(function() {
+    threads.start(function () {
         if (!createFloatWindow()) {
             setStatus("悬浮窗权限失败");
             ui.run(() => {
@@ -656,13 +701,13 @@ ui.btn_both.click(() => {
 ui.btn_help.click(() => {
     dialogs.alert(
         "使用说明",
-        "1. 确保手机已开启无障碍服务；\n" +
+        "1. 确保手机为安卓手机并已开启无障碍服务；\n" +
         "2. 脚本运行时会自动启动“掌上华医”并进入收藏页面；\n" +
         "3. 首次使用会请求截图权限，请允许；\n" +
         "4. 请确保收藏页面中有课程，否则会提示未找到；\n" +
         "5. 学习/考试过程中请勿操作手机；\n" +
-        "6. 打开视频检测到当前为移动网络，会自动点击继续，请在WiFi环境下运行，避免浪费流量。；\n"+
-        "7. 如需停止脚本请按‘音量上键’停止所有脚本；\n"+
+        "6. 打开视频检测到当前为移动网络，会自动点击继续，请在WiFi环境下运行，避免浪费流量。\n" +
+        "7. 如需停止脚本请按‘音量上键’停止所有脚本；\n" +
         "8. 如有问题请联系作者 QQ：799890216。"
     );
 });
