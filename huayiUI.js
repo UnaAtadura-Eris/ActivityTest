@@ -532,7 +532,7 @@ function auto_study() {
 // 启动与权限
 // ==============================================
 function ScreenCapture() {
-    setScreenMetrics(1080, 1920);
+    setScreenMetrics(device.width, device.height);
     if (!requestScreenCapture()) { log("截图权限失败"); exit(); }
     log("截图权限OK");
     sleep(1000);
