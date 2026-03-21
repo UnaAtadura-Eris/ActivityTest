@@ -18,6 +18,33 @@ const 最大考试次数 = 5;
 const UserName = "miku";
 
 // ==============================================
+// UI 布局
+// ==============================================
+auto.waitFor();
+初始化音量控制();
+
+
+ui.layout(
+    <vertical padding="16" bg="#FFF5F5F5">
+        <text text="掌上华医自动学习考试系统" textSize="20sp" gravity="center" margin="8" textColor="#FF2196F3" />
+        <text text="v2.0.3" textSize="14sp" gravity="center" marginBottom="16" textColor="#FF666666" />
+        <button id="btn_study" text="📺 只看视频" style="Widget.AppCompat.Button.Colored" margin="8" />
+        <button id="btn_exam" text="📝 只考试" style="Widget.AppCompat.Button.Colored" margin="8" visibility="gone" />
+        <button id="btn_both" text="🚀 先看视频再考试" style="Widget.AppCompat.Button.Colored" margin="8" visibility="gone" />
+        <button id="btn_help" text="❓ 使用说明" style="Widget.AppCompat.Button" margin="8" />
+        <text id="txt_status" text="状态：等待操作" textSize="14sp" marginTop="16" textColor="#FF4CAF50" />
+        <text text="作者联系方式：QQ 799890216" textSize="12sp" gravity="center" marginTop="16" textColor="#FF999999" />
+    </vertical>
+);
+
+// 状态更新函数
+function setStatus(msg) {
+    ui.run(() => {
+        ui.txt_status.setText("状态：" + msg);
+    });
+}
+
+// ==============================================
 // 音量控制（新增）
 // ==============================================
 let yinLiang = 0;
@@ -36,33 +63,6 @@ function 开启静音() {
 function 恢复音量() {
     device.setMusicVolume(yinLiang);
     log("恢复原来音量:" + yinLiang);
-}
-
-// ==============================================
-// UI 布局
-// ==============================================
-auto.waitFor();
-初始化音量控制();
-
-
-ui.layout(
-    <vertical padding="16" bg="#FFF5F5F5">
-        <text text="掌上华医自动学习考试系统" textSize="20sp" gravity="center" margin="8" textColor="#FF2196F3" />
-        <text text="v2.0.2" textSize="14sp" gravity="center" marginBottom="16" textColor="#FF666666" />
-        <button id="btn_study" text="📺 只看视频" style="Widget.AppCompat.Button.Colored" margin="8" />
-        <button id="btn_exam" text="📝 只考试" style="Widget.AppCompat.Button.Colored" margin="8" visibility="visible" />
-        <button id="btn_both" text="🚀 先看视频再考试" style="Widget.AppCompat.Button.Colored" margin="8" visibility="gone" />
-        <button id="btn_help" text="❓ 使用说明" style="Widget.AppCompat.Button" margin="8" />
-        <text id="txt_status" text="状态：等待操作" textSize="14sp" marginTop="16" textColor="#FF4CAF50" />
-        <text text="作者联系方式：QQ 799890216" textSize="12sp" gravity="center" marginTop="16" textColor="#FF999999" />
-    </vertical>
-);
-
-// 状态更新函数
-function setStatus(msg) {
-    ui.run(() => {
-        ui.txt_status.setText("状态：" + msg);
-    });
 }
 
 // ==============================================
