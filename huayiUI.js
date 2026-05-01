@@ -401,6 +401,13 @@ function handleClassThinking() {
     if (ok) ok.click();
 }
 
+function 关闭温馨提示() {
+    if (!textContains("温馨提示").exists()) return;
+    log("关闭温馨提示");    
+    let ok = id("com.huayi.cme:id/btn_confirm_Positive").findOne(1000);
+    if (ok) ok.click();
+}
+
 /**
  * 播放视频并监控完成状态
  */
@@ -425,6 +432,7 @@ function play_video() {
             id("android:id/button1").click();
         }
         handleClassThinking();
+        关闭温馨提示()
         showTimeText();
 
         // 检测完成文字
