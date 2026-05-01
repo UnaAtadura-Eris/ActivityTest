@@ -1,7 +1,7 @@
 "ui";
 /**
  * @Description: AutoX.js 掌上华医自动学习考试脚本（免费版）
- * @version: 2.1.0
+ * @version: 2.1.1
  * @Author: UnaAtadura
  * @Date: 2026.04.30 11:08
  */
@@ -17,6 +17,7 @@ let 上一题文字 = "";
 let 当前选项字母 = "A";
 let 考试次数 = 0;
 const 最大考试次数 = 5;
+
 
 // ==============================================
 // UI 布局
@@ -38,6 +39,7 @@ ui.layout(
         <button id="btn_exam" text="📝 只考试" style="Widget.AppCompat.Button.Colored" margin="8" visibility="visible" />
         <button id="btn_both" text="🚀 先看视频再考试（慎用）" style="Widget.AppCompat.Button.Colored" margin="8" visibility="visible" />
         <button id="btn_help" text="❓ 使用说明" style="Widget.AppCompat.Button" margin="8" />
+        <button id="donation" text="💖 觉得好用就打赏一下呗" style="Widget.AppCompat.Button" margin="8"/>
         <text id="txt_status" text="状态：等待操作" textSize="14sp" marginTop="16" textColor="#FF4CAF50" />
         <text text="{{
             '作者联系方式：\n'+
@@ -727,6 +729,31 @@ ui.btn_help.click(() => {
         "5. 学习/考试过程中请勿操作手机；\n" +
         "6. 打开视频检测到当前为移动网络，会自动点击继续，请在WiFi环境下运行，避免浪费流量；\n" +
         "7. 如需停止脚本请按‘音量上键’停止所有脚本；\n" +
-        "8. 如有问题请联系作者，小红书：95663982160；抖音：70749010681"
+        "8. 如有问题请联系作者\n小红书：95663982160\n抖音：70749010681"
     );
+});
+
+ui.donation.click(() => {
+    let imgPath = files.path("./微信收款码.png");
+    if (!files.exists(imgPath)) {
+        toast("收款码图片未找到，请将图片放在脚本目录下");
+        return;
+    }
+    // 动态创建布局（注意：必须在 UI 线程中创建）
+    let dialogLayout = ui.inflate(
+        <vertical padding="16" bg="#FFFFFF">
+            <text text="微信扫一扫，支持作者" textSize="18sp" gravity="center" textColor="#000000" marginBottom="12" />
+            <img id="qr_img" src={"file://" + imgPath} width="240" height="240" gravity="center" />
+            <button id="closeBtn" text="关闭" marginTop="16" style="Widget.AppCompat.Button.Colored" />
+        </vertical>
+    , null, false);
+    // 创建对话框并显示
+    let dialog = dialogs.build({
+        customView: dialogLayout,
+        cancelable: true
+    }).show();
+    // 绑定关闭按钮点击事件
+    dialogLayout.closeBtn.on("click", () => {
+        dialog.dismiss();
+    });
 });
