@@ -503,8 +503,8 @@ function play_video() {
         //     break;
         // }
 
-        lastPercent = percent;
-        sleep(10 * 1000);
+        // lastPercent = percent;
+        sleep(60 * 1000);
     }
     sleep(1000);
 }
