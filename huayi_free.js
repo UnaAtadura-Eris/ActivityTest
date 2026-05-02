@@ -1,9 +1,9 @@
 "ui";
 /**
  * @Description: AutoX.js 掌上华医自动学习考试脚本（免费版）
- * @version: 2.1.1
+ * @version: 2.1.2
  * @Author: UnaAtadura
- * @Date: 2026.04.30 11:08
+ * @Date: 2026.05.02 11:08
  */
 
 
@@ -34,7 +34,7 @@ dialogs.confirm("免责声明", "本脚本仅用于个人学习、技术研究�
 ui.layout(
     <vertical padding="16" bg="#FFF5F5F5">
         <text text="掌上华医自动学习考试系统" textSize="20sp" gravity="center" margin="8" textColor="#FF2196F3" />
-        <text text="v2.1.0" textSize="14sp" gravity="center" marginBottom="16" textColor="#FF666666" />
+        <text text="v2.1.2" textSize="14sp" gravity="center" marginBottom="16" textColor="#FF666666" />
         <button id="btn_study" text="📺 只看视频" style="Widget.AppCompat.Button.Colored" margin="8" />
         <button id="btn_exam" text="📝 只考试" style="Widget.AppCompat.Button.Colored" margin="8" visibility="visible" />
         <button id="btn_both" text="🚀 先看视频再考试（慎用）" style="Widget.AppCompat.Button.Colored" margin="8" visibility="visible" />
@@ -447,7 +447,7 @@ function play_video() {
         }
         handleClassThinking();
         关闭温馨提示()
-        showTimeText();
+        // showTimeText();
 
         // 检测完成文字
         if (text("本课件已学习完毕").exists()) {
@@ -464,44 +464,44 @@ function play_video() {
             break;
         }
 
-        let playDuration = id("com.huayi.cme:id/playDuration").findOne(2000);
-        let videoDuration = id("com.huayi.cme:id/videoDuration").findOne(2000);
-        if (!playDuration || !videoDuration) {
-            log("⚠️ 未找到时间文本，继续等待...");
-            sleep(10 * 1000);
-            continue;
-        }
+        // let playDuration = id("com.huayi.cme:id/playDuration").findOne(2000);
+        // let videoDuration = id("com.huayi.cme:id/videoDuration").findOne(2000);
+        // if (!playDuration || !videoDuration) {
+        //     log("⚠️ 未找到时间文本，继续等待...");
+        //     sleep(10 * 1000);
+        //     continue;
+        // }
 
-        let playText = playDuration.text();
-        let videoText = videoDuration.text();
-        let playSec = timeToSeconds(playText);
-        let videoSec = timeToSeconds(videoText);
+        // let playText = playDuration.text();
+        // let videoText = videoDuration.text();
+        // let playSec = timeToSeconds(playText);
+        // let videoSec = timeToSeconds(videoText);
 
-        if (videoSec <= 0) {
-            sleep(2000);
-            continue;
-        }
+        // if (videoSec <= 0) {
+        //     sleep(2000);
+        //     continue;
+        // }
 
-        let percent = playSec / videoSec;
-        log(`当前进度：${(percent * 100).toFixed(2)}% (${playText}/${videoText})`);
+        // let percent = playSec / videoSec;
+        // log(`当前进度：${(percent * 100).toFixed(2)}% (${playText}/${videoText})`);
 
         // 进度回退 → 播放完成（循环播放）
-        if (lastPercent > 0 && percent < lastPercent) {
-            log("✅ 检测到进度倒退，视频已播放完毕");
-            back();
-            break;
-        }
+        // if (lastPercent > 0 && percent < lastPercent) {
+        //     log("✅ 检测到进度倒退，视频已播放完毕");
+        //     back();
+        //     break;
+        // }
 
-        if (percent >= 0.999 || playSec >= videoSec) {
-            log("✅ 视频即将播放完成，等待10秒后退出");
-            sleep(10 * 1000);
-            if (text("本课件已学习完毕").exists()) {
-                id("com.huayi.cme:id/btn_test_result_left").click();
-            } else {
-                back();
-            }
-            break;
-        }
+        // if (percent >= 0.99999 || playSec >= videoSec) {
+        //     log("✅ 视频即将播放完成，等待10秒后退出");
+        //     sleep(10 * 1000);
+        //     if (text("本课件已学习完毕").exists()) {
+        //         id("com.huayi.cme:id/btn_test_result_left").click();
+        //     } else {
+        //         back();
+        //     }
+        //     break;
+        // }
 
         lastPercent = percent;
         sleep(10 * 1000);
@@ -537,7 +537,7 @@ function study_card() {
         card.click(); sleep(3000);
         play_video();
         sleep(2500);
-        targetList = textMatches(/.*(未学习|播放至).*/).find();
+        // targetList = textMatches(/.*(未学习|播放至).*/).find();
     }
 }
 
@@ -725,18 +725,19 @@ ui.btn_help.click(() => {
         "1. 确保手机为安卓手机并已开启无障碍服务，首次使用考试功能会请求截图/录屏权限，请允许；\n" +
         "2. 运行脚本前，先登录掌上华医账号，收藏想要学习的课程，点击对应功能后，将自动学习/考试；\n" +
         "3. 某些极端或意外情况（如广告弹窗）可能会导致脚本失效，重启掌上华医App及脚本即可；\n" +
-        "4. 随缘更新，随时跑路，有bug可以反馈，但不一定修复，使用本脚本\n" +
+        "4. 随缘更新，随时跑路，有bug可以反馈，但不一定修复...\n" +
         "5. 学习/考试过程中请勿操作手机；\n" +
         "6. 打开视频检测到当前为移动网络，会自动点击继续，请在WiFi环境下运行，避免浪费流量；\n" +
         "7. 如需停止脚本请按‘音量上键’停止所有脚本；\n" +
-        "8. 如有问题请联系作者\n小红书：95663982160\n抖音：70749010681"
+        "8. 有互动病例演练的课程尽量别选，可能有bug；\n" +
+        "9. 如有问题请联系作者\n小红书：95663982160\n抖音：70749010681"
     );
 });
 
 ui.donation.click(() => {
     let imgPath = files.path("./微信收款码.png");
     if (!files.exists(imgPath)) {
-        toast("收款码图片未找到，请将图片放在脚本目录下");
+        log("收款码图片未找到，请将图片放在脚本目录下");
         return;
     }
     // 动态创建布局（注意：必须在 UI 线程中创建）
