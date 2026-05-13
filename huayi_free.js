@@ -1,27 +1,33 @@
 "ui";
 /**
- * @Description: AutoX.js 掌上华医自动学习考试脚本（免费版）
- * @version: 2.1.2
+ * @Description: AutoX.js 掌上华医自动学习考试脚本(重写答题模块，新增考试通过后写入题库功能，新增考试未通过后清空题库功能，新增考试结果识别逻辑，新增实时答题缓存机制，优化日志输出和界面交互)
+ * @version: 2.2.1
  * @Author: UnaAtadura
- * @Date: 2026.05.02 11:08
+ * @Date: 2026.05.04 16:08
  */
-
-
+console.setGlobalLogConfig({
+    "file": "/sdcard/脚本/HuaYi运行日志.txt"
+});
 
 // ==============================================
 // 配置
 // ==============================================
+
+let yinLiang = 0;
 const 题库文件路径 = files.path("./考试题库.json");
 let 题库 = 读取题库();
 let 上一题文字 = "";
 let 当前选项字母 = "A";
 let 考试次数 = 0;
-const 最大考试次数 = 5;
-
-
+const 最大考试次数 = 6;
+let 本次答题缓存 = []; // 新增：实时缓存本次考试的题目+选择的答案
 // ==============================================
-// UI 布局
+// 悬浮窗相关
 // ==============================================
+let floatyWindow = null;
+let logText = "";
+let exitListenerRegistered = false;
+
 auto.waitFor();
 
 // ======================
@@ -34,7 +40,7 @@ dialogs.confirm("免责声明", "本脚本仅用于个人学习、技术研究�
 ui.layout(
     <vertical padding="16" bg="#FFF5F5F5">
         <text text="掌上华医自动学习考试系统" textSize="20sp" gravity="center" margin="8" textColor="#FF2196F3" />
-        <text text="v2.1.2" textSize="14sp" gravity="center" marginBottom="16" textColor="#FF666666" />
+        <text text="v2.1.3" textSize="14sp" gravity="center" marginBottom="16" textColor="#FF666666" />
         <button id="btn_study" text="📺 只看视频" style="Widget.AppCompat.Button.Colored" margin="8" />
         <button id="btn_exam" text="📝 只考试" style="Widget.AppCompat.Button.Colored" margin="8" visibility="visible" />
         <button id="btn_both" text="🚀 先看视频再考试（慎用）" style="Widget.AppCompat.Button.Colored" margin="8" visibility="visible" />
@@ -56,10 +62,7 @@ function setStatus(msg) {
     });
 }
 
-// ==============================================
-// 音量控制（新增）
-// ==============================================
-let yinLiang = 0;
+
 
 
 function 初始化音量控制() {
@@ -77,12 +80,49 @@ function 恢复音量() {
     log("恢复原来音量:" + yinLiang);
 }
 
-// ==============================================
-// 悬浮窗相关
-// ==============================================
-let floatyWindow = null;
-let logText = "";
-let exitListenerRegistered = false;
+function findClickableParent(obj) {
+    if (!obj) return null;
+    
+    let current = obj;
+    // 最多向上找 20 层（足够深）
+    for (let i = 0; i < 10; i++) {
+        if (!current) break;
+        
+        // 判断：这个控件是否可点击
+        if (current.clickable() === true) {
+            return current;
+        }
+        
+        // 不可点击就继续往上找
+        current = current.parent();
+    }
+    return null;
+}
+
+// 智能文字点击：自动找可点击的父控件，不用传层数 n！
+function 文字点击(wenzi) {
+    // 查找文字控件
+    let WZ = className("android.widget.TextView").text(wenzi).findOne();
+    if (!WZ) {
+        log("❌ 未找到文字：" + wenzi);
+        return false;
+    }
+
+    // 自动找可点击的父控件
+    let clickableObj = findClickableParent(WZ);
+    if (!clickableObj) {
+        log("❌ 找不到可点击的父控件：" + wenzi);
+        return false;
+    }
+
+    // 找到就点击
+    log("✅ 点击：" + wenzi);
+    clickableObj.click();
+    sleep(1000);
+    return true;
+}
+
+
 
 /**
  * 创建悬浮窗
@@ -246,143 +286,258 @@ function 提取答案字母(str) {
     return m ? m[1] : null;
 }
 
-function 识别对错并更新题库() {
+function 识别对错并更新题库() {    
+    h = device.height; //屏幕高
+    w = device.width; //屏幕宽
+    x = (w / 3) * 2;
+    h1 = (h / 6) * 5;
+    h2 = (h / 6);
+    swipe(x, h1, x, h2, 500);
+    log("✅ 执行上滑动作");//如果对错图标没出现在屏幕会导致获取控件高度失败，所以执行上滑尽量显示图标
     sleep(1000);
-    let screen = captureScreen();
+  
+    // 找对错图标
     let resultIcons = id("iv_item_test_result_weitongguo").find();
-    if (resultIcons.length === 0) {
-        screen.recycle();
-        return;
-    }
+
     for (let i = 0; i < resultIcons.length; i++) {
         let icon = resultIcons[i];
         let bounds = icon.bounds();
-        let hasGreen = false, hasRed = false;
-        for (let x = bounds.left; x < bounds.right; x++) {
-            for (let y = bounds.top; y < bounds.bottom; y++) {
-                let color = images.pixel(screen, x, y);
-                let r = colors.red(color), g = colors.green(color), b = colors.blue(color);
-                if (g > r + 40 && g > b + 40) { hasGreen = true; x = 9999; y = 9999; break; }
-                if (r > g + 40 && r > b + 40) { hasRed = true; x = 9999; y = 9999; break; }
-            }
+        
+        // ======================================
+        // 核心：根据高度判断 对/错
+        // ======================================
+        let height = bounds.height(); // 获取控件高度
+        let isRight = false;
+
+        if (height === 21) {
+            isRight = true;  // 高度21 = 答对 ✅
+            log("第"+(i+1)+"题：高度21 → 正确");
+        } else if (height === 26) {
+            isRight = false; // 高度26 = 答错 ❌
+            log("第"+(i+1)+"题：高度26 → 错误");
+        } else {
+            log("第"+(i+1)+"题：未知高度("+height+")，跳过");
+            continue;
         }
+
+        // 找题目
         let 题目区域 = icon.parent().findOne(id("tv_item_title"));
         if (!题目区域) continue;
+        
         let 完整题目 = 题目区域.text().trim();
         let 正确选项 = 提取答案字母(完整题目);
-        if (hasGreen && 正确选项) {
+
+        // ======================================
+        // 只有正确才记录到题库
+        // ======================================
+        if (isRight && 正确选项) {
             let 纯题干 = 清洗题目(完整题目);
             题库[纯题干] = 正确选项;
             log("记录题目：" + 纯题干 + " → " + 正确选项);
-        }else{
-            log("无正确答案记录");
+        } else {
+            log("此题不记录（错误/无答案）");
         }
     }
+
     保存题库();
-    screen.recycle();
 }
 
 // ==============================================
-// 考试相关
+// 重写后的做题模块：实时缓存题目+所选答案
 // ==============================================
 function 开始做题() {
+    本次答题缓存 = []; // 每次开始做题，先清空上一次的缓存
+    上一题文字 = "";
+
     while (true) {
         sleep(300);
+        // 1. 找到当前题目
         let 题目控件 = id("com.huayi.cme:id/tv_quest_single_title").findOne(2500);
-        if (!题目控件) { log("未找到题目，结束"); break; }
+        if (!题目控件) { 
+            log("未找到题目，结束答题"); 
+            break; 
+        }
+
+        // 2. 清洗题干，和题库key保持完全一致
         let 当前题目Raw = 题目控件.text().trim();
         let 当前题目 = 清洗题目(当前题目Raw);
+
+        // 3. 题目重复=已经答完，触发交卷
         if (当前题目 === 上一题文字) {
-            log("题目重复，交卷");
+            log("题目重复，执行交卷");
             let 交卷 = id("com.huayi.cme:id/tv_answer_question_jiaojuan").findOne(2000);
-            if (交卷) { 交卷.click(); sleep(2000); }
+            if (交卷) { 
+                交卷.click(); 
+                sleep(1000); 
+            }
             break;
         }
         上一题文字 = 当前题目;
-        let 正确选项 = 获取正确选项(当前题目);
-        if (正确选项) {
-            log("匹配题库：" + 正确选项);
-            点击选项(正确选项);
+
+        // 4. 匹配题库/选择默认选项
+        let 本次选择的选项 = 获取正确选项(当前题目);
+        if (!本次选择的选项) {
+            本次选择的选项 = 当前选项字母;
+            log("无题库存，默认选：" + 本次选择的选项);
         } else {
-            log("无题，默认选：" + 当前选项字母);
-            点击选项(当前选项字母);
+            log("匹配题库成功，选：" + 本次选择的选项);
         }
+
+        // 5. 点击选项
+        点击选项(本次选择的选项);
+
+        // 6. 核心：缓存本题的题干+所选答案（考试通过后用这个写入题库）
+        本次答题缓存.push({
+            题干: 当前题目,
+            所选答案: 本次选择的选项
+        });
+        log("已缓存题目：" + 当前题目 + " → " + 本次选择的选项);
+
+        // 7. 点击下一题
         sleep(800);
         let 下一题 = id("com.huayi.cme:id/btn_nextquestions").findOne(3000);
         if (下一题) 下一题.click();
     }
 }
 
+// ==============================================
+// 重写后的考试主逻辑：通过/未通过双场景适配
+// ==============================================
 function do_test() {
     考试次数 = 0;
     while (考试次数 < 最大考试次数) {
         考试次数++;
-        log("第" + 考试次数 + "次考试");
+        log("===== 第" + 考试次数 + "次考试 =====");
+        
+        // 开始答题
         开始做题();
-        sleep(2000);
-        let 未通过 = textContains("考试未通过").findOne(5000);
-        if (!未通过) {
-            log("考试通过！");
-            let 完成 = id("com.huayi.cme:id/btn_test_result_left").findOne(3000);
-            if (完成) 完成.click();
+        sleep(500);
+
+        // ======================================
+        // 场景1：考试通过 → 用缓存写入题库
+        // ======================================
+        let 考试通过 = textContains("考试通过").findOne(3000);
+        if (考试通过) {
+            log("✅ 考试通过！开始写入本次答题记录到题库");
+            
+            // 遍历本次答题缓存，只新增题库里没有的题目
+            let 新增题目数 = 0;
+            for (let i = 0; i < 本次答题缓存.length; i++) {
+                let 答题记录 = 本次答题缓存[i];
+                // 题库里没有这道题，才写入
+                if (!题库[答题记录.题干]) {
+                    题库[答题记录.题干] = 答题记录.所选答案;
+                    新增题目数++;
+                    log("新增题库：" + 答题记录.题干 + " → " + 答题记录.所选答案);
+                }
+            }
+
+            // 保存题库到文件
+            保存题库();
+            log(`✅ 本次考试新增 ${新增题目数} 道题到题库，题库更新完成`);
+
+            // 点击返回，结束考试
+            let 完成按钮 = id("com.huayi.cme:id/btn_test_result_left").findOne(3000);
+            if (完成按钮) 完成按钮.click();
             break;
-        }        
-        log("未通过，收集答案...");
-        识别对错并更新题库();
-        if (考试次数 >= 最大考试次数) { log("达到最大次数"); return; }
-        let 重考 = id("com.huayi.cme:id/btn_test_result_right").findOne(3000);
-        if (重考) { 重考.click(); sleep(3500); }
-        当前选项字母 = 下一个字母(当前选项字母);
-        上一题文字 = "";
+        }
+
+        // ======================================
+        // 场景2：考试未通过 → 原有的对错识别+题库更新逻辑
+        // ======================================
+        let 考试未通过 = textContains("考试未通过").findOne(3000);
+        if (考试未通过) {
+            log("❌ 考试未通过，开始识别正确答案并更新题库");
+            识别对错并更新题库();
+
+            // 超过最大考试次数，清空题库
+            if (考试次数 >= 最大考试次数) { 
+                log("达到最大考试次数，开始清空题库...");
+                题库 = {}; 
+                files.write(题库文件路径, JSON.stringify(题库, null, 2)); 
+                log("✅ 题库已清空！");
+                return; 
+            }
+
+            // 点击重新考试
+            let 重考按钮 = id("com.huayi.cme:id/btn_test_result_right").findOne(3000);
+            if (重考按钮) { 
+                重考按钮.click(); 
+                sleep(3500); 
+            }
+
+            // 切换下一个默认选项，循环盲选
+            当前选项字母 = 下一个字母(当前选项字母);
+            log("下次考试默认选项切换为：" + 当前选项字母);
+            continue;
+        }
+
+        // 异常情况：既没识别到通过也没识别到未通过，退出循环
+        log("⚠️ 未识别到考试结果，退出本次考试");
+        break;
     }
 }
 
 function test_card() {
-    let targetList = textMatches(/.*待考试.*/).find();
-    if (targetList.length === 0) { log("无待考试"); return; }
-    log("找到" + targetList.length + "个待考");
-    sleep(1500);
-    for (let i = 0; i < targetList.length; i++) {
-        let view = targetList[i];
-        let card = null;
-        let temp = view;
-        for (let k = 0; k < 8; k++) {
-            if (!temp) break;
-            if (temp.id() === "com.huayi.cme:id/rl_item_course_detail") {
-                card = temp; break;
-            }
-            temp = temp.parent();
+    while (true) {
+        // 查找所有“待考试”
+        let list = textMatches(/.*待考试.*/).find();
+        if (!list || list.length === 0) {
+            log("✅ 没有待考试了");
+            break;
         }
-        if (!card) { log("找不到卡片，跳过"); continue; }
-        log("打开第" + (i + 1) + "个");
-        card.click(); sleep(5000);
-        if (textContains("请点击左下角“考试”按钮参加课后测试").exists()) {
-            log("✅ 检测到考试提示");
-            id("com.huayi.cme:id/btnAlertDialogConfirm").click();
+        文字点击("待考试")
+        sleep(1500);
+        // 弹窗处理
+        let tip = textContains("请点击左下角“考试”按钮参加课后测试").findOne(5000);
+        if (tip) {
+            log("✅ 检测到提示");
+            let ok = id("com.huayi.cme:id/btnAlertDialogConfirm").findOne(3000);
+            if (ok) ok.click();
+            sleep(1000);
         }
-        if (id("rl_video_kaoshi").exists()) id("rl_video_kaoshi").click();
-        do_test();   
-        sleep(2500);
-        targetList = textMatches(/.*待考试.*/).find();
+
+        // 点击考试按钮
+        let examBtn = id("rl_video_kaoshi").findOne(5000);
+        if (examBtn) {
+            examBtn.click();
+            sleep(1000);
+        }
+
+        // 执行答题
+        do_test();
+        sleep(1000);
+
     }
-    log("全部考试完成");
+    log("🎉 所有待考试完成");
 }
 
 function auto_test() {
-    let courses = id("com.huayi.cme:id/ll_mylike_course").find();
-    if (courses.length === 0) { log("无课程"); return; }
-    log("找到" + courses.length + "个课程");
-    for (let i = 0; i < courses.length; i++) {
-        courses[i].click(); sleep(2000);
-        for (let k = 0; k < 3; k++) {
-            if (textContains("待考试").exists()) {
-                test_card();
-            } else {
-                back(); sleep(1000);
-                break
-            }
+    while (true) {
+        let courses = id("com.huayi.cme:id/ll_mylike_course").find();
+        if (!courses || courses.length === 0) {
+            log("❌ 没有课程");
+            return;
         }
-        courses = id("com.huayi.cme:id/ll_mylike_course").find();
+        log("课程数量：" + courses.length);
+        let hasTask = false;
+        for (let i = 0; i < courses.length; i++) {
+            courses[i].click();
+            sleep(1500);
+
+            if (textContains("待考试").exists()) {
+                log("👉 进入有待考试课程");
+                test_card();
+                hasTask = true;
+            }
+            back();
+            sleep(1500);
+        }
+
+        if (!hasTask) {
+            log("🎉 所有课程完成");
+            break;
+        }
     }
 }
 
@@ -510,64 +665,77 @@ function play_video() {
 }
 
 function study_card() {
-    let targetList = textMatches(/.*(未学习|播放至).*/).find();
-    if (targetList.length === 0) { log("无未学习"); return; }
-    log("找到" + targetList.length + "个未学");
-    sleep(1500);
-    for (let i = 0; i < targetList.length; i++) {
-        let view = targetList[i];
-        let card = null;
-        let temp = view;
-        for (let k = 0; k < 8; k++) {
-            if (!temp) break;
-            if (temp.id() === "com.huayi.cme:id/rl_item_course_detail") {
-                card = temp; break;
+    log("=== 开始学习未学习课程===");
+    
+    // 循环：一直找，直到没有符合条件的课程
+    while (true) {
+        // 每次都重新获取所有卡片（关键！）
+        let allCards = id("com.huayi.cme:id/rl_item_course_detail").find();
+        let foundValidCard = false;
+
+        // 遍历找【第一个】符合条件的
+        for (let i = 0; i < allCards.length; i++) {
+            let card = allCards[i];
+            let textViews = card.find(className("android.widget.TextView"));
+            let hasUnstudy = false;
+            let hasInteractive = false;
+
+            for (let j = 0; j < textViews.length; j++) {
+                let t = textViews[j].text().trim();
+                if (t.includes("未学习")|| t.includes("播放至") ) hasUnstudy = true;
+                if (t.includes("互动病例演练")) hasInteractive = true;
             }
-            temp = temp.parent();
+
+            // 满足条件：未学习 且 不是互动病例
+            if (hasUnstudy && !hasInteractive) {
+                log("✅ 找到有效未学习课程，开始学习");
+                card.click();
+                sleep(1000);     
+                play_video();
+                // log("✅ 假装学完");
+                sleep(1000);                
+                foundValidCard = true;
+                break; // 学完一个，立刻重新找下一个
+            }
         }
-        if (!card) { log("跳过"); continue; }
-        
-        // 检查卡片内是否包含“互动病例演练”文本，若包含则跳过
-        let hasInteractive = card.findOne(text("互动病例演练"));
-        if (hasInteractive) {
-            log("跳过互动病例演练"); 
-            continue;
+
+        // 再也找不到了，退出
+        if (!foundValidCard) {
+            log("=== 所有未学习课程已完成 ===");
+            back();sleep(1000);  
+            break;
         }
-        
-        card.click(); sleep(3000);
-        play_video();
-        sleep(2500);
-        // targetList = textMatches(/.*(未学习|播放至).*/).find();
     }
 }
 
-
 function auto_study() {
-    let courses = id("com.huayi.cme:id/ll_mylike_course").find();
-    if (courses.length === 0) { log("无课程"); return; }
-    for (let i = 0; i < courses.length; i++) {
-        courses[i].click(); sleep(2000);
-        for (let k = 0; k < 3; k++) {
-            if (textContains("未学习").exists() || textContains("播放至").exists()) {
-                study_card();
-            } else {
-                back(); sleep(1000);
-                break
-            }
-        }
-        // courses = id("com.huayi.cme:id/ll_mylike_course").find();
+    const courseId = "com.huayi.cme:id/ll_mylike_course";
+    let courses = id(courseId).find();
+    if (courses.length === 0) {
+        log("未找到任何课程");
+        return;
     }
+    log("找到 " + courses.length + " 个课程");
+    for (let i = 0; i < courses.length; i++) {
+        log("正在打开第 " + (i + 1) + " 个课程");
+        courses[i].click();
+        sleep(2000);
+        study_card(); 
+        // 重新获取课程列表，避免界面刷新导致控件失效
+        courses = id(courseId).find();
+    }
+    log("✅ 所有课程检查完成");
 }
 
 // ==============================================
 // 启动与权限
 // ==============================================
-function ScreenCapture() {
-    setScreenMetrics(device.width, device.height);
-    if (!requestScreenCapture()) { log("截图权限失败"); exit(); }
-    log("截图权限OK");
-    sleep(1000);
-}
+// function ScreenCapture() {
+//     setScreenMetrics(device.width, device.height);
+//     if (!requestScreenCapture()) { log("截图权限失败"); exit(); }
+//     log("截图权限OK");
+//     sleep(1000);
+// }
 
 function start_app() {
     log("启动掌上华医");
@@ -650,8 +818,8 @@ ui.btn_exam.click(() => {
             });
             return;
         }
-        setStatus("请求截图...");
-        ScreenCapture();
+        // setStatus("请求截图...");
+        // ScreenCapture();
         setStatus("启动应用...");
         if (!start_app()) {
             setStatus("启动失败");
@@ -691,8 +859,8 @@ ui.btn_both.click(() => {
             });
             return;
         }
-        setStatus("请求截图...");
-        ScreenCapture();
+        // setStatus("请求截图...");
+        // ScreenCapture();
         setStatus("启动应用...");
         if (!start_app()) {
             setStatus("启动失败");
